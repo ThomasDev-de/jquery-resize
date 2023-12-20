@@ -2,7 +2,7 @@
 
 By default, the resize event is fired on the window element. This small plugin fires the resize event with additional information on all elements.
 
-![example](demo/img/example.png)
+![example](demo/img/example_resize.png)
 
 ## Setup
 ```js 
@@ -11,7 +11,6 @@ $.setupResize.setDefaults({
     wait: 0 // Default 100ms, when changing the size, how long should you wait until the event is triggered?
 });
 ```
-
 ## Calling up the plugin
 
 ```js

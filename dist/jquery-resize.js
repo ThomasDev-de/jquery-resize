@@ -27,6 +27,7 @@
         const SETUP = $.setupResize.getDefaults();
         let sizes = getElementDimensions();
         let waitingTimeout = null;
+        console.log(SETUP);
 
         /**
          * @description Represents an object that observes changes to the size of a specified element.
@@ -83,6 +84,7 @@
                 axis = 'y'
             }
 
+            // calc diff
             const diff = {
                 width :  newSizes.width - sizes.width,
                 height : newSizes.height - sizes.height,
@@ -100,8 +102,8 @@
                 $element.html(content.join('<br>'));
             }
 
-
             if (typeof callback === 'function') {
+
                 callback(axis, newSizes, sizes, diff);
             }
             sizes = newSizes;
