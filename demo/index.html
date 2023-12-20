@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        html, body {
+            padding:50px;
+            font-family: monospace;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../dist/jquery-resize.min.js"></script>
+<script>
+    $(document).ready(function () {
+        const body = $('body');
+        $.setupResize.setDefaults({debug: true});
+        body
+            .resize()
+            .on('resize', (e, direction, sizes, oldSizes, diffSizes) => {
+                console.log(e, direction, sizes, oldSizes, diffSizes);
+            });
+    });
+</script>
+</body>
+</html>

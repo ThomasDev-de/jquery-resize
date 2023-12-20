@@ -1,0 +1,15 @@
+{
+  "name": "webcito/jquery-resize",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "thomas",
+      "email": "t.kirsch@webcito.de"
+    }
+  ],
+  "require": {
+      "components/jquery": ">=3.6.0"
+  }
+}
