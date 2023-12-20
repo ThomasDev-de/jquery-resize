@@ -8,7 +8,8 @@
         }, getDefaults() {
             return this.DEFAULTS;
         }, DEFAULTS: {
-            debug: false
+            debug: false,
+            wait: 100
         }
     };
     /**
@@ -37,7 +38,7 @@
                 if (waitingTimeout !== null) {
                     clearTimeout(waitingTimeout);
                 }
-                waitingTimeout = setTimeout(onResizingFinished, 100);
+                waitingTimeout = setTimeout(onResizingFinished, SETUP.wait);
             }
             $element.data('initResize', true);
         });
@@ -50,8 +51,8 @@
          */
         function getElementDimensions(){
             return {
-                width: $element.width(),
-                height: $element.height()
+                width: $element.outerWidth(),
+                height: $element.outerHeight()
             }
         }
 
@@ -71,15 +72,15 @@
             if (! changeWidth && ! changeHeight)
                 return;
 
-            let direction;
+            let axis;
             if (changeWidth && changeHeight){
-                direction = 'both';
+                axis = 'both';
             }
             else if (changeWidth) {
-                direction = 'x'
+                axis = 'x'
             }
             else{
-                direction = 'y'
+                axis = 'y'
             }
 
             const diff = {
@@ -87,11 +88,11 @@
                 height : newSizes.height - sizes.height,
             }
 
-            $element.trigger('resize', [direction, newSizes, sizes, diff]);
+            $element.trigger('resize', [axis, newSizes, sizes, diff]);
 
             if (SETUP.debug){
                 const content = [
-                    'direction: ' +direction,
+                    'resized on axis: ' +axis,
                     'new size: ' + JSON.stringify(newSizes),
                     'before size: ' + JSON.stringify(sizes),
                     'diff size: ' + JSON.stringify(diff),
@@ -101,7 +102,7 @@
 
 
             if (typeof callback === 'function') {
-                callback(direction, newSizes, sizes, diff);
+                callback(axis, newSizes, sizes, diff);
             }
             sizes = newSizes;
         }

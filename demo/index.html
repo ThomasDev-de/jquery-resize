@@ -5,20 +5,26 @@
     <title>Title</title>
     <style>
         html, body {
-            padding:50px;
             font-family: monospace;
             width: 100%;
             height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 <body>
+<div class="js-resize" style="color:white; padding:20px; width: 50%; height: 50%; background: cadetblue">
+
+</div>
 <script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../dist/jquery-resize.min.js"></script>
 <script>
     $(document).ready(function () {
-        const body = $('body');
-        $.setupResize.setDefaults({debug: true});
+        const body = $('.js-resize');
+        $.setupResize.setDefaults({debug: true, wait: 100});
         body
             .resize()
             .on('resize', (e, direction, sizes, oldSizes, diffSizes) => {
