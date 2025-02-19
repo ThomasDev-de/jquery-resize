@@ -13,4 +13,8 @@
   "require": {
       "components/jquery": "^3"
   }
+  ,
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  }
 }
