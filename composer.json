@@ -1,6 +1,6 @@
 {
   "name": "webcito/jquery-resize",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "description",
   "minimum-stability": "stable",
   "license": "proprietary",
@@ -11,6 +11,6 @@
     }
   ],
   "require": {
-      "components/jquery": ">=3.6.0"
+      "components/jquery": "^3"
   }
 }

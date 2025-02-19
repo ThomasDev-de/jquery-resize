@@ -21,10 +21,7 @@
 <script type="text/javascript" src="../dist/jquery-resize.min.js"></script>
 <script>
     $(document).ready(function () {
-        const body = $('.js-resize');
-        $.setupResize.setDefaults({debug: true, wait: 100});
-        body
-            .resize()
+       $('.js-resize').resize({debug: true, wait: 1000})
             .on('resize', (e, direction, sizes, oldSizes, diffSizes) => {
                 console.log(e, direction, sizes, oldSizes, diffSizes);
             });
