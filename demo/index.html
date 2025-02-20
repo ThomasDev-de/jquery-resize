@@ -21,10 +21,14 @@
 <script type="text/javascript" src="../dist/jquery-resize.min.js"></script>
 <script>
     $(document).ready(function () {
-       $('.js-resize').resize({debug: true, wait: 1000})
+       $('.js-resize').resize({debug: true, wait: 300})
             .on('resize', (e, direction, sizes, oldSizes, diffSizes) => {
                 console.log(e, direction, sizes, oldSizes, diffSizes);
             });
+
+       setTimeout(() => {
+           $('.js-resize').resize('resize');
+       }, 5000);
     });
 </script>
 </body>

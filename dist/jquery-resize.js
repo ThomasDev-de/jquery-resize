@@ -1,131 +1,175 @@
 (function ($) {
-
     $.setupResize = {
         setDefaults(o = {}) {
-            this.DEFAULTS = $.extend(true, this.DEFAULTS, o || {})
-        }, setDefault(prop, value) {
+            this.DEFAULTS = $.extend(true, this.DEFAULTS, o || {});
+        },
+        setDefault(prop, value) {
             this.DEFAULTS[prop] = value;
-        }, getDefaults() {
+        },
+        getDefaults() {
             return this.DEFAULTS;
-        }, DEFAULTS: {
+        },
+        DEFAULTS: {
             debug: false,
-            wait: 400
-        }
+            wait: 400, // Standard-Debounce-Zeit
+        },
     };
+
     /**
-     *
-     * @param {function|null} callbackOrOptions
-     * @return {*|jQuery|HTMLElement}
+     * Hauptfunktion für Resize-Handling
+     * @param {function|object|string|null} callbackOrOptionsOrMethod
+     * @returns {jQuery|HTMLElement}
      */
-    $.fn.resize = function (callbackOrOptions = null) {
+    $.fn.resize = function (callbackOrOptionsOrMethod = null) {
         if ($(this).length > 1) {
-            return $(this).each(function (i, e) {
-                return $(e).resize(callbackOrOptions);
-            })
+            // Mehrere Elemente: Individuell behandeln
+            return $(this).each(function () {
+                $(this).resize(callbackOrOptionsOrMethod);
+            });
         }
+
         const $element = $(this);
-        const SETUP = $.setupResize.getDefaults();
-        let sizes = getElementDimensions();
-        let waitingTimeout = null;
-
-        if ($element.data('initResize') !== true) {
-            const customSettings = typeof callbackOrOptions === 'object' ? callbackOrOptions : {};
-            const settings = $.extend({}, $.setupResize.getDefaults(), customSettings);
-            $element.data('resizeSettings', settings);
-            $element.data('initResize', true);
-        }
+        let previousSizes = null; // Speichert alte Größen zur Differenzberechnung
+        let resizeObserver; // Observer wird hier gespeichert
 
         /**
-         * @description Represents an object that observes changes to the size of a specified element.
-         * @constructor
-         * @param {function} callback - A function that will be called whenever the size of the observed element changes.
+         * Hauptlogik für die Größenänderung
+         * @param {Object} newSizes - Neu berechnete Größe des Elements
          */
-        const resizeObserver = new ResizeObserver((e) => {
-            if ($element.data('initResize')) {
-                let settings = $element.data('resizeSettings');
-                // Prüfen, ob ein Timeout bereits läuft, ansonsten warten
-                if (waitingTimeout === null) {
-                    waitingTimeout = setTimeout(() => {
-                        waitingTimeout = null; // Timeout zurücksetzen
-                        onResizingFinished(); // Resize-Finish ausführen
-                    }, settings.wait);
-                }
+        function onResizing(newSizes, shouldTriggerEvent = true) {
+            // Alte Abmessungen holen
+            const currentSizes = previousSizes || { width: 0, height: 0 };
 
-            }
-            $element.data('initResize', true);
-        });
+            // Änderungen prüfen
+            const changeWidth = newSizes.width !== currentSizes.width;
+            const changeHeight = newSizes.height !== currentSizes.height;
 
-        /**
-         * Gets the dimensions (width and height) of the element.
-         *
-         * @return {Object} An object containing the width and height of the element.
-         *                  {width: <number>, height: <number>}
-         */
-        function getElementDimensions() {
-            return {
-                width: $element.outerWidth(),
-                height: $element.outerHeight()
-            }
-        }
+            // Wenn keine Änderung stattgefunden hat, abbrechen
+            if (!changeWidth && !changeHeight) return;
 
-        /**
-         * Called when resizing of an element is finished.
-         * Performs necessary actions based on the changes in width and height.
-         */
-        function onResizingFinished() {
-            if (waitingTimeout !== null) {
-                clearTimeout(waitingTimeout);
-            }
-
-            const newSizes = getElementDimensions();
-            const changeWidth = newSizes.width !== sizes.width;
-            const changeHeight = newSizes.height !== sizes.height;
-
-            if (!changeWidth && !changeHeight)
-                return;
-
+            // Änderungsachse bestimmen
             let axis;
             if (changeWidth && changeHeight) {
-                axis = 'both';
+                axis = "both";
             } else if (changeWidth) {
-                axis = 'x'
+                axis = "x";
             } else {
-                axis = 'y'
+                axis = "y";
             }
 
-            // calc diff
+            // Differenz berechnen
             const diff = {
-                width: newSizes.width - sizes.width,
-                height: newSizes.height - sizes.height,
+                width: newSizes.width - currentSizes.width,
+                height: newSizes.height - currentSizes.height,
+            };
+
+            // Event nur triggern, wenn es erlaubt ist
+            if (shouldTriggerEvent) {
+                $element.trigger("resize", [axis, newSizes, currentSizes, diff]);
             }
 
-            $element.trigger('resize', [axis, newSizes, sizes, diff]);
-            const settings = $element.data('resizeSettings');
+            // Debugging (falls aktiviert)
+            const settings = $element.data("resizeSettings");
             if (settings.debug) {
-                const content = [
-                    'resized on axis: ' + axis,
-                    'new size: ' + JSON.stringify(newSizes),
-                    'before size: ' + JSON.stringify(sizes),
-                    'diff size: ' + JSON.stringify(diff),
-                ];
-                $element.html(content.join('<br>'));
+                console.log("Resized on axis:", axis);
+                console.log("New size:", newSizes);
+                console.log("Previous size:", currentSizes);
+                console.log("Diff:", diff);
             }
 
-            if (typeof callbackOrOptions === 'function') {
-                callbackOrOptions(axis, newSizes, sizes, diff);
+            // Callback ausführen (falls festgelegt)
+            if (typeof callbackOrOptionsOrMethod === "function") {
+                callbackOrOptionsOrMethod(axis, newSizes, currentSizes, diff);
             }
 
-            sizes = newSizes;
+            // Neue Größe speichern
+            previousSizes = newSizes;
         }
 
-        resizeObserver.observe($element.get(0));
+        /**
+         * Initialisiert Resize-Events
+         */
+        function initEvents() {
+            // Cleanup: Observer trennen, wenn das Element entfernt wird
+            $element.on("remove", function () {
+                if (resizeObserver) {
+                    resizeObserver.disconnect();
+                }
+            });
+        }
 
-        // Clean-up für Observer
-        $element.on('remove', function () {
-            resizeObserver.disconnect();
-        });
+        /**
+         * Startet den ResizeObserver
+         */
+        function startObserver() {
+            // ResizeObserver erstellen
+            resizeObserver = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    const { contentRect } = entry;
+                    const newSizes = { width: contentRect.width, height: contentRect.height };
 
+                    // Initiale Größe prüfen und ignorieren
+                    if (!previousSizes) {
+                        previousSizes = newSizes; // Speichere Startgröße
+                        return; // Überspringe, da keine Änderung vorliegt
+                    }
 
-        return $element;
-    }
-}(jQuery))
+                    // Verzögerung (debouncing)
+                    const settings = $element.data("resizeSettings");
+                    clearTimeout($element.data("resizeTimeout")); // Bestehenden Timeout abbrechen
+                    $element.data(
+                        "resizeTimeout",
+                        setTimeout(() => onResizing(newSizes), settings.wait)
+                    );
+                }
+            });
+
+            // Observer aktivieren
+            resizeObserver.observe($element.get(0));
+        }
+
+        /**
+         * Initialisiert die Funktionalität
+         */
+        function init() {
+            const customSettings =
+                typeof callbackOrOptionsOrMethod === "object" ? callbackOrOptionsOrMethod : {};
+            const settings = $.extend({}, $.setupResize.getDefaults(), customSettings);
+            $element.data("resizeSettings", settings);
+            $element.data("initResize", true);
+
+            initEvents();
+            startObserver();
+        }
+
+        /**
+         * Verarbeitet Methoden wie "resize"
+         */
+        function handleMethodCall(method) {
+            switch (method) {
+                case "resize":
+                    const currentSizes = {
+                        width: $element.outerWidth(),
+                        height: $element.outerHeight(),
+                    };
+                    onResizing(currentSizes, false); // Manuelle Größenänderung auslösen
+                    break;
+
+                default:
+                    console.warn(`Method "${method}" is not supported.`);
+                    break;
+            }
+        }
+
+        if ($element.data("initResize") !== true) {
+            init();
+        }
+
+        // Verarbeiten von Methodenaufrufen
+        if (typeof callbackOrOptionsOrMethod === "string") {
+            handleMethodCall(callbackOrOptionsOrMethod);
+        }
+
+        return $element; // jQuery-Support
+    };
+})(jQuery);
