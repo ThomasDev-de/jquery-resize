@@ -71,6 +71,12 @@
             // Debugging (falls aktiviert)
             const settings = $element.data("resizeSettings");
             if (settings.debug) {
+                $element.html(
+                    "axis: " + axis + "<br>" +
+                    "new: " + JSON.stringify(newSizes) + "<br>" +
+                    "old: " + JSON.stringify(currentSizes) + "<br>" +
+                    "diff: " + JSON.stringify(diff)
+                );
                 console.log("Resized on axis:", axis);
                 console.log("New size:", newSizes);
                 console.log("Previous size:", currentSizes);

@@ -2,33 +2,230 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>jQuery Resize Plugin Demo</title>
     <style>
+        :root {
+            color-scheme: light;
+        }
         html, body {
             font-family: monospace;
+            margin: 0;
+            padding: 0;
             width: 100%;
-            height: 100%;
+            min-height: 100%;
+            background: #f4f7fa;
+            color: #13212e;
+        }
+        .page {
+            max-width: 1100px;
+            margin: 24px auto;
+            padding: 0 16px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 16px;
+        }
+        .panel {
+            border: 1px solid #cad5df;
+            background: #fff;
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .controls {
+            position: sticky;
+            top: 16px;
+            height: fit-content;
+        }
+        .row {
+            margin-bottom: 12px;
+        }
+        .row label {
+            display: block;
+            margin-bottom: 6px;
+        }
+        .row input[type="range"] {
+            width: 100%;
+        }
+        .inline {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            gap: 8px;
             align-items: center;
+        }
+        .inline input[type="number"] {
+            width: 100px;
+        }
+        .btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        button {
+            border: 1px solid #9db2c5;
+            background: #e9f0f6;
+            color: #0e2234;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font: inherit;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #d9e7f3;
+        }
+        .stage {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            min-height: 460px;
+        }
+        .demo-box {
+            color: #fff;
+            padding: 14px;
+            border-radius: 8px;
+            min-height: 130px;
+            box-sizing: border-box;
+            overflow: auto;
+            resize: both;
+            border: 2px solid rgba(255,255,255,0.35);
+        }
+        .js-resize {
+            background: cadetblue;
+            width: 60%;
+            height: 240px;
+        }
+        .js-resize-secondary {
+            background: #915ea9;
+            width: 75%;
+            height: 190px;
+        }
+        .log {
+            margin-top: 12px;
+            max-height: 220px;
+            overflow: auto;
+            background: #0c1823;
+            color: #cae6ff;
+            border-radius: 8px;
+            padding: 10px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .hint {
+            color: #4d6274;
+            font-size: 12px;
+        }
+        @media (max-width: 900px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+            .stage {
+                grid-template-columns: 1fr;
+            }
+            .controls {
+                position: static;
+            }
         }
     </style>
 </head>
 <body>
-<div class="js-resize" style="color:white; padding:20px; width: 50%; height: 50%; background: cadetblue"></div>
+<div class="page">
+    <aside class="panel controls">
+        <div class="row">
+            <label for="widthRange">Primary width (%)</label>
+            <input id="widthRange" type="range" min="25" max="95" step="1" value="60">
+        </div>
+        <div class="row">
+            <label for="heightRange">Primary height (px)</label>
+            <input id="heightRange" type="range" min="120" max="420" step="1" value="240">
+        </div>
+        <div class="row inline">
+            <label for="waitInput">Debounce wait (ms)</label>
+            <input id="waitInput" type="number" min="0" max="3000" step="50" value="300">
+        </div>
+        <div class="row inline">
+            <input id="debugToggle" type="checkbox" checked>
+            <label for="debugToggle">Debug mode</label>
+        </div>
+        <div class="btns">
+            <button id="applyOptions">Apply options</button>
+            <button id="triggerPrimary">Manual trigger primary</button>
+            <button id="triggerAll">Manual trigger all</button>
+            <button id="clearLog">Clear log</button>
+        </div>
+        <p class="hint">You can also drag-resize each box (native CSS resize handle).</p>
+    </aside>
+
+    <main class="panel">
+        <div class="stage">
+            <div class="demo-box js-resize"></div>
+            <div class="demo-box js-resize-secondary"></div>
+        </div>
+        <div id="log" class="log"></div>
+    </main>
+</div>
+
 <script type="text/javascript" src="../vendor/components/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../dist/jquery-resize.min.js"></script>
 <script>
     $(document).ready(function () {
-       $('.js-resize').resize({debug: true, wait: 300})
-            .on('resize', (e, direction, sizes, oldSizes, diffSizes) => {
-                console.log(e, direction, sizes, oldSizes, diffSizes);
+        const $primary = $('.js-resize');
+        const $secondary = $('.js-resize-secondary');
+        const $log = $('#log');
+
+        function logLine(source, direction, sizes, oldSizes, diffSizes) {
+            const line = [
+                new Date().toLocaleTimeString(),
+                source,
+                'axis=' + direction,
+                'new=' + JSON.stringify(sizes),
+                'old=' + JSON.stringify(oldSizes),
+                'diff=' + JSON.stringify(diffSizes)
+            ].join(' | ');
+            $log.prepend(document.createTextNode(line + '\n'));
+        }
+
+        function bindAll(wait, debug) {
+            $('.js-resize, .js-resize-secondary').each(function () {
+                $(this).removeData('initResize');
+                $(this).off('resize');
             });
 
-       setTimeout(() => {
-           $('.js-resize').resize('resize');
-       }, 5000);
+            $primary.resize({ debug: debug, wait: wait })
+                .on('resize', function (e, direction, sizes, oldSizes, diffSizes) {
+                    logLine('primary', direction, sizes, oldSizes, diffSizes);
+                });
+
+            $secondary.resize(function (direction, sizes, oldSizes, diffSizes) {
+                logLine('secondary/callback', direction, sizes, oldSizes, diffSizes);
+            }).on('resize', function (e, direction, sizes, oldSizes, diffSizes) {
+                logLine('secondary/event', direction, sizes, oldSizes, diffSizes);
+            });
+        }
+
+        bindAll(300, true);
+
+        $('#widthRange').on('input', function () {
+            $primary.css('width', $(this).val() + '%');
+        });
+        $('#heightRange').on('input', function () {
+            $primary.css('height', $(this).val() + 'px');
+        });
+
+        $('#applyOptions').on('click', function () {
+            const wait = Number($('#waitInput').val()) || 0;
+            const debug = $('#debugToggle').is(':checked');
+            bindAll(wait, debug);
+            $primary.resize('resize');
+            $secondary.resize('resize');
+            logLine('system', 'rebind', { wait: wait, debug: debug }, {}, {});
+        });
+
+        $('#triggerPrimary').on('click', function () {
+            $primary.resize('resize');
+        });
+        $('#triggerAll').on('click', function () {
+            $('.js-resize, .js-resize-secondary').resize('resize');
+        });
+        $('#clearLog').on('click', function () {
+            $log.text('');
+        });
     });
 </script>
 </body>
